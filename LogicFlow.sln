@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicFlow", "LogicFlow\LogicFlow.csproj", "{E5F3231E-87C7-45D7-A8D7-E849719492D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogicFlow.Tests", "LogicFlow.Tests\LogicFlow.Tests.csproj", "{5C89FB06-9627-449A-9F98-C3039F97B692}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E5F3231E-87C7-45D7-A8D7-E849719492D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5F3231E-87C7-45D7-A8D7-E849719492D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5F3231E-87C7-45D7-A8D7-E849719492D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5F3231E-87C7-45D7-A8D7-E849719492D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C89FB06-9627-449A-9F98-C3039F97B692}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C89FB06-9627-449A-9F98-C3039F97B692}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C89FB06-9627-449A-9F98-C3039F97B692}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C89FB06-9627-449A-9F98-C3039F97B692}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
