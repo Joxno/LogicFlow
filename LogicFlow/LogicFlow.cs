@@ -38,11 +38,17 @@ namespace LogicFlow
         private List<FlowCondition> m_UntilConditions = new List<FlowCondition>();
         private Action m_ExecuteAction = null;
         private Action m_CompletionAction = null;
+        private Flow m_ExecuteFlow = null;
 
         // Interface
         public FlowAction(Action Execute)
         {
             m_ExecuteAction = Execute;
+        }
+
+        public FlowAction(Flow Execute)
+        {
+            m_ExecuteFlow = Execute;
         }
 
         public void Execute()
@@ -53,13 +59,23 @@ namespace LogicFlow
             }
             else if (CanExecute())
             {
-                m_ExecuteAction?.Invoke();
+                if (m_ExecuteFlow != null && !m_ExecuteFlow.IsCompleted)
+                    m_ExecuteFlow.Execute();
+                else
+                    m_ExecuteAction?.Invoke();
             }
 
             if (m_UntilConditions.Count > 0)
                 IsExecuted = UntilSatisfied();
             else
-                IsExecuted = true;
+            {
+                if(m_ExecuteFlow != null)
+                {
+                    IsExecuted = m_ExecuteFlow.IsCompleted;
+                }
+                else
+                    IsExecuted = true;
+            }
         }
 
         public bool CanExecute()
@@ -106,7 +122,17 @@ namespace LogicFlow
             m_CompletionAction = CompletionExecute;
         }
 
-        public bool IsExecuted { get; set; } = false;
+        private bool m_Executed = false;
+        public bool IsExecuted
+        {
+            get { return m_Executed; }
+            set
+            {
+                if (value == false && m_ExecuteFlow != null)
+                    m_ExecuteFlow.IsCompleted = false;
+                m_Executed = value;
+            }
+        }
     }
 
     public class Flow
@@ -116,6 +142,7 @@ namespace LogicFlow
         private FlowAction m_CurrentAction = null;
         private Action m_FlowCompletion = null;
         private FlowCondition m_LoopCondition = new FlowCondition(() => true);
+        private FlowCondition m_CancelCondition = new FlowCondition(() => false);
 
         private void _Reset()
         {
@@ -128,6 +155,13 @@ namespace LogicFlow
         {
             if (!IsCompleted)
             {
+                if(m_CancelCondition.IsSatisfied())
+                {
+                    IsCompleted = true;
+                    _Reset();
+                    return;
+                }
+
                 if (!m_CurrentAction.IsExecuted)
                     m_CurrentAction.Execute();
 
@@ -168,13 +202,35 @@ namespace LogicFlow
             return this;
         }
 
+        public Flow Do(Flow Execute)
+        {
+            m_Actions.Add(new FlowAction(Execute));
+
+            if (m_CurrentAction == null)
+                m_CurrentAction = m_Actions[0];
+
+            return this;
+        }
+
         public Flow DoUntil(Action Execute, Func<bool> Condition)
         {
             Do(Execute).Until(Condition);
             return this;
         }
 
+        public Flow DoUntil(Flow Execute, Func<bool> Condition)
+        {
+            Do(Execute).Until(Condition);
+            return this;
+        }
+
         public Flow DoWhen(Action Execute, Func<bool> Condition)
+        {
+            Do(Execute).When(Condition);
+            return this;
+        }
+
+        public Flow DoWhen(Flow Execute, Func<bool> Condition)
         {
             Do(Execute).When(Condition);
             return this;
@@ -216,65 +272,35 @@ namespace LogicFlow
             return this;
         }
 
-        public Flow CancelWhen(Func<bool> CancelCondition)
+        public Flow CancelFlowWhen(Func<bool> CancelCondition)
         {
-
+            m_CancelCondition = new FlowCondition(CancelCondition);
             return this;
         }
 
-        public Flow ReturnResult()
+        public Flow LoopFlow()
         {
-
+            m_LoopCondition = new FlowCondition(() => false);
             return this;
         }
 
-        public Flow LoopUntil(Func<bool> Condition)
+        public Flow LoopFlowUntil(Func<bool> Condition)
         {
             m_LoopCondition = new FlowCondition(Condition);
             return this;
         }
 
-        public bool IsCompleted { get; private set; } = false;
-    }
-
-    public class Foobar
-    {
-        public Foobar()
+        private bool m_Completed = false;
+        public bool IsCompleted
         {
-            var t_Count = 0;
-            var t_Flow = new Flow().Do(() => { t_Count++; })
-                                    .Until(() => t_Count > 10)
-                                    .OnActionCompletion(() => { t_Count = 1000; })
-                                    .Do(() => { t_Count = 0; })
-                                    .Do(() => { t_Count += 10; })
-                                    .ContinueWhen(() => t_Count == 10)
-                                    .OnCompletion(() => { t_Count = 0; })
-                                    .ExecuteAsync();
+            get { return m_Completed; }
+            set
+            {
+                if (value == false)
+                    _Reset();
 
-
-            var t_Arr = new List<int> { 9, 2, 3, 4, 7, 1, 8, 5 };
-            var t_Switched = false;
-            var t_Index = 0;
-            var t_SortFlow = new Flow().Do(() => t_Switched = false)
-                                        .DoWhen
-                                        (
-                                            () =>
-                                            {
-                                                var t_Temp = t_Arr[t_Index + 1];
-                                                t_Arr[t_Index + 1] = t_Arr[t_Index];
-                                                t_Arr[t_Index] = t_Temp;
-                                                t_Switched = true;
-                                                t_Index++;
-                                            },
-                                            () => t_Arr[t_Index] > t_Arr[t_Index + 1]
-                                        )
-                                        .DoWhen
-                                        (
-                                            () => t_Index = 0,
-                                            () => t_Index >= t_Arr.Count
-                                        )
-                                        .CancelWhen(() => !t_Switched);
-
+                m_Completed = value;
+            }
         }
     }
 }
